@@ -6,7 +6,7 @@ export default function Footer() {
       <p>
         Copyright © AGENTS.md a Series of LF Projects, LLC
         <br />
-        For web site terms of use, trademark policy and other project policies please see{" "}
+        For web site terms of use, trademark policy, <a href="/security" className="underline hover:no-underline">security policy</a> and other project policies please see{" "}
         <a href="https://lfprojects.org" target="_blank" className="underline hover:no-underline">
           https://lfprojects.org
         </a>

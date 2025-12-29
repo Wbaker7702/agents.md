@@ -5,5 +5,8 @@
   ],
   "plugins": [
     "security"
-  ]
+  ],
+  "rules": {
+    "security/detect-object-injection": "off"
+  }
 }

@@ -50,7 +50,7 @@ export default function SecurityPage() {
                 Please do not report security vulnerabilities through public GitHub issues.
             </p>
             <p className="mb-4 text-gray-600 dark:text-gray-300">
-                Instead, please send an email to <a href="mailto:security@example.com" className="text-blue-600 dark:text-blue-400 hover:underline">security@example.com</a>.
+                Instead, please send an email to <a href="mailto:security@your-domain.com" className="text-blue-600 dark:text-blue-400 hover:underline">security@your-domain.com</a>.
             </p>
             <p className="mb-4 text-gray-600 dark:text-gray-300">
                 You should expect to receive a response within 24 hours. If for some reason you do not, please follow up with us to ensure we received your original message.

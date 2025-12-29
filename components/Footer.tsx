@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -6,7 +7,7 @@ export default function Footer() {
       <p>
         Copyright © AGENTS.md a Series of LF Projects, LLC
         <br />
-        For web site terms of use, trademark policy, <a href="/security" className="underline hover:no-underline">security policy</a> and other project policies please see{" "}
+        For web site terms of use, trademark policy, <Link href="/security" className="underline hover:no-underline">security policy</Link> and other project policies please see{" "}
         <a href="https://lfprojects.org" target="_blank" className="underline hover:no-underline">
           https://lfprojects.org
         </a>

@@ -18,7 +18,7 @@ We take the security of our software seriously. If you believe you have found a 
 
 Please do not report security vulnerabilities through public GitHub issues.
 
-Instead, please send an email to **security@example.com**.
+Instead, please send an email to **security@your-domain.com**.
 
 You should expect to receive a response within 24 hours. If for some reason you do not, please follow up with us to ensure we received your original message.
 

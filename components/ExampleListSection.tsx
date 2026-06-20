@@ -18,6 +18,9 @@ interface RepoCardProps {
   language: string;
 }
 
+/** Placeholder array for contributor avatars. */
+const PLACEHOLDER_AVATARS = [null, null, null];
+
 /** Hard-coded examples used for the marketing page. */
 const REPOS: RepoCardProps[] = [
   {
@@ -43,6 +46,8 @@ const REPOS: RepoCardProps[] = [
     language: "C++",
   },
 ];
+
+const PLACEHOLDER_AVATARS = Array.from({ length: 3 });
 
 interface ExampleListSectionProps {
   contributorsByRepo?: Record<string, { avatars: string[]; total: number }>;
@@ -168,7 +173,7 @@ function ExampleCard({
                     className="w-6 h-6 rounded-full ring-2 ring-white dark:ring-gray-900 object-cover block shrink-0"
                   />
                 ))
-              : Array.from({ length: 3 }).map((_, i) => (
+              : PLACEHOLDER_AVATARS.map((_, i) => (
                   <span
                     key={i}
                     aria-hidden

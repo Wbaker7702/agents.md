@@ -75,11 +75,6 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
     };
   }
 
-  const contributorsByRepo: Record<
-    string,
-    { avatars: string[]; total: number }
-  > = {};
-
   // Build common headers for GitHub API requests. We add the Authorization
   // header only when an access token is present. Supplying an empty
   // `Authorization` header would prompt GitHub to treat the request as
@@ -94,6 +89,7 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
   }
 
   await Promise.all(
+  const repoDataResults = await Promise.all(
     repoNames.map(async (fullName) => {
       try {
         // Fetch top 3 contributor avatars
@@ -146,6 +142,23 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
         contributorsByRepo[fullName] = { avatars: [], total: 0 };
       }
     })
+  );
+        return { fullName, avatars, total };
+      } catch {
+        console.error(`Error fetching contributors for ${fullName}`);
+        return { fullName, avatars: [], total: 0 };
+      }
+    })
+  );
+
+  const contributorsByRepo: Record<
+    string,
+    { avatars: string[]; total: number }
+  > = Object.fromEntries(
+    repoDataResults.map((res) => [
+      res.fullName,
+      { avatars: res.avatars, total: res.total },
+    ])
   );
 
   cachedContributors = {

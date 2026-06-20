@@ -75,11 +75,6 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
     };
   }
 
-  const contributorsByRepo: Record<
-    string,
-    { avatars: string[]; total: number }
-  > = {};
-
   // Build common headers for GitHub API requests. We add the Authorization
   // header only when an access token is present. Supplying an empty
   // `Authorization` header would prompt GitHub to treat the request as
@@ -93,55 +88,68 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
     baseHeaders["Authorization"] = `Bearer ${process.env.GH_AUTH_TOKEN}`;
   }
 
-  for (const fullName of repoNames) {
-    try {
-      // Fetch top 3 contributor avatars
-      const avatarsRes = await fetch(
-        `https://api.github.com/repos/${fullName}/contributors?per_page=3`,
-        {
-          headers: baseHeaders,
-        }
-      );
-
-      const avatarsData = avatarsRes.ok
-        ? ((await avatarsRes.json()) as Array<{ avatar_url: string }>)
-        : [];
-
-      const avatars = avatarsData.slice(0, 3).map((c) => c.avatar_url);
-
-      // Fetch contributor count (using per_page=1 to inspect Link header)
-      let total = avatarsData.length; // fallback
+  const results = await Promise.all(
+    repoNames.map(async (fullName) => {
       try {
-        const countRes = await fetch(
-          `https://api.github.com/repos/${fullName}/contributors?per_page=1&anon=1`,
-          {
-            headers: baseHeaders,
-          }
-        );
+        // Fetch top 3 contributor avatars and contributor count in parallel.
+        // We use inline .catch() handlers to ensure that a failure in one
+        // request doesn't reject the entire Promise.all for the repository.
+        const [avatarsRes, countRes] = await Promise.all([
+          fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=3`,
+            { headers: baseHeaders }
+          ).catch((err) => {
+            console.error(`Error fetching avatars for ${fullName}:`, err);
+            return null;
+          }),
+          fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=1&anon=1`,
+            { headers: baseHeaders }
+          ).catch((err) => {
+            console.error(`Error fetching count for ${fullName}:`, err);
+            return null;
+          }),
+        ]);
 
-        const link = countRes.headers.get("link");
-        if (link && /rel="last"/.test(link)) {
-          const match = link.match(/&?page=(\d+)>; rel="last"/);
-          if (match?.[1]) {
-            total = parseInt(match[1], 10);
+        const avatarsData =
+          avatarsRes && avatarsRes.ok
+            ? ((await avatarsRes.json()) as Array<{ avatar_url: string }>)
+            : [];
+
+        const avatars = avatarsData.slice(0, 3).map((c) => c.avatar_url);
+
+        // Fetch contributor count (using per_page=1 to inspect Link header)
+        let total = avatarsData.length; // fallback
+        if (countRes) {
+          const link = countRes.headers.get("link");
+          if (link && /rel="last"/.test(link)) {
+            const match = link.match(/&?page=(\d+)>; rel="last"/);
+            if (match?.[1]) {
+              total = parseInt(match[1], 10);
+            }
+          } else {
+            const oneData = countRes.ok
+              ? ((await countRes.json()) as any[])
+              : [];
+            total = oneData.length;
           }
-        } else {
-          const oneData = countRes.ok ? ((await countRes.json()) as any[]) : [];
-          total = oneData.length;
         }
-      } catch {
-        // ignore errors, keep fallback
-        console.error(`Error fetching contributors for ${fullName}`);
-      }
 
-      contributorsByRepo[fullName] = {
-        avatars,
-        total,
-      };
-    } catch {
-      console.error(`Error fetching contributors for ${fullName}`);
-      contributorsByRepo[fullName] = { avatars: [], total: 0 };
-    }
+        return { fullName, avatars, total };
+      } catch (error) {
+        console.error(`Error processing contributors for ${fullName}:`, error);
+        return { fullName, avatars: [], total: 0 };
+      }
+    })
+  );
+
+  const contributorsByRepo: Record<
+    string,
+    { avatars: string[]; total: number }
+  > = {};
+
+  for (const { fullName, avatars, total } of results) {
+    contributorsByRepo[fullName] = { avatars, total };
   }
 
   cachedContributors = {

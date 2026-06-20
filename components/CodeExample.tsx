@@ -2,6 +2,8 @@ import React from "react";
 import ClipboardIcon from "./icons/ClipboardIcon";
 import CopyIcon from "./icons/CopyIcon";
 
+const INLINE_CODE_REGEX = /(`[^`]+`)/g;
+
 interface CodeExampleProps {
   /** Markdown content to display; falls back to default example if not provided */
   code?: string;

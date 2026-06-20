@@ -44,6 +44,8 @@ const REPOS: RepoCardProps[] = [
   },
 ];
 
+const PLACEHOLDER_AVATARS = Array.from({ length: 3 });
+
 interface ExampleListSectionProps {
   contributorsByRepo?: Record<string, { avatars: string[]; total: number }>;
   standalone?: boolean; // if false wraps with its own section
@@ -168,7 +170,7 @@ function ExampleCard({
                     className="w-6 h-6 rounded-full ring-2 ring-white dark:ring-gray-900 object-cover block shrink-0"
                   />
                 ))
-              : Array.from({ length: 3 }).map((_, i) => (
+              : PLACEHOLDER_AVATARS.map((_, i) => (
                   <span
                     key={i}
                     aria-hidden

@@ -137,6 +137,8 @@ export default function CodeExample({
   const md = code ?? EXAMPLE_AGENTS_MD;
   const [copied, setCopied] = React.useState(false);
 
+  const parsedMarkdown = React.useMemo(() => parseMarkdown(md), [md]);
+
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(md);
@@ -187,7 +189,7 @@ export default function CodeExample({
           } border border-gray-200 dark:border-gray-700 shadow-sm`}
         >
           <code>
-            {parseMarkdown(md)}
+            {parsedMarkdown}
           </code>
         </pre>
       </div>

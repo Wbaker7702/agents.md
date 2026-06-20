@@ -88,6 +88,24 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
     baseHeaders["Authorization"] = `Bearer ${process.env.GH_AUTH_TOKEN}`;
   }
 
+  await Promise.all(
+    repoNames.map(async (fullName) => {
+      try {
+        // Fetch top 3 contributor avatars and total count in parallel
+        const [avatarsRes, countRes] = await Promise.all([
+          fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=3`,
+            { headers: baseHeaders }
+          ),
+          fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=1&anon=1`,
+            { headers: baseHeaders }
+          ).catch(() => {
+            // Handle error for the count fetch specifically to match original behavior
+            console.error(`Error fetching contributors for ${fullName}`);
+            return null;
+          }),
+        ]);
   const results = await Promise.all(
     repoNames.map(async (fullName) => {
       try {
@@ -191,6 +209,34 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
           : [];
 
         const avatars = avatarsData.slice(0, 3).map((c) => c.avatar_url);
+        let total = avatarsData.length; // fallback
+
+        if (countRes) {
+          try {
+            const link = countRes.headers.get("link");
+            if (link && /rel="last"/.test(link)) {
+              const match = link.match(/&?page=(\d+)>; rel="last"/);
+              if (match?.[1]) {
+                total = parseInt(match[1], 10);
+              }
+            } else {
+              const oneData = countRes.ok
+                ? ((await countRes.json()) as any[])
+                : [];
+              total = oneData.length;
+            }
+          } catch {
+            console.error(`Error fetching contributors for ${fullName}`);
+          }
+        }
+
+        contributorsByRepo[fullName] = { avatars, total };
+      } catch {
+        console.error(`Error fetching contributors for ${fullName}`);
+        contributorsByRepo[fullName] = { avatars: [], total: 0 };
+      }
+    })
+  );
 
         // Fetch contributor count (using per_page=1 to inspect Link header)
         let total = avatarsData.length; // fallback

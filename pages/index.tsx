@@ -93,7 +93,7 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
     baseHeaders["Authorization"] = `Bearer ${process.env.GH_AUTH_TOKEN}`;
   }
 
-  for (const fullName of repoNames) {
+  const repoDataPromises = repoNames.map(async (fullName) => {
     try {
       // Fetch top 3 contributor avatars
       const avatarsRes = await fetch(
@@ -134,14 +134,25 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
         console.error(`Error fetching contributors for ${fullName}`);
       }
 
-      contributorsByRepo[fullName] = {
-        avatars,
-        total,
+      return {
+        fullName,
+        data: {
+          avatars,
+          total,
+        },
       };
     } catch {
       console.error(`Error fetching contributors for ${fullName}`);
-      contributorsByRepo[fullName] = { avatars: [], total: 0 };
+      return {
+        fullName,
+        data: { avatars: [], total: 0 },
+      };
     }
+  });
+
+  const allRepoData = await Promise.all(repoDataPromises);
+  for (const { fullName, data } of allRepoData) {
+    contributorsByRepo[fullName] = data;
   }
 
   cachedContributors = {

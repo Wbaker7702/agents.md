@@ -150,7 +150,239 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
 
   for (const { fullName, avatars, total } of results) {
     contributorsByRepo[fullName] = { avatars, total };
+  await Promise.all(
+    repoNames.map(async (fullName) => {
+      try {
+        // Fetch top 3 contributor avatars and total count in parallel
+        const [avatarsRes, countRes] = await Promise.all([
+          fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=3`,
+            { headers: baseHeaders }
+          ),
+          fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=1&anon=1`,
+            { headers: baseHeaders }
+          ).catch(() => {
+            // Handle error for the count fetch specifically to match original behavior
+            console.error(`Error fetching contributors for ${fullName}`);
+            return null;
+          }),
+        ]);
+  const results = await Promise.all(
+    repoNames.map(async (fullName) => {
+      try {
+        // Fetch top 3 contributor avatars AND contributor count concurrently
+        const [avatarsRes, countRes] = await Promise.all([
+          fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=3`,
+            {
+              headers: baseHeaders,
+            }
+          ),
+          fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=1&anon=1`,
+            {
+              headers: baseHeaders,
+            }
+          ),
+        ]);
+
+        const avatarsData = avatarsRes.ok
+          ? ((await avatarsRes.json()) as Array<{ avatar_url: string }>)
+          : [];
+
+        const avatars = avatarsData.slice(0, 3).map((c) => c.avatar_url);
+
+        // Fetch contributor count (using per_page=1 to inspect Link header)
+        let total = avatarsData.length; // fallback
+        try {
+          const link = countRes.headers.get("link");
+          if (link && /rel="last"/.test(link)) {
+            const match = link.match(/&?page=(\d+)>; rel="last"/);
+            if (match?.[1]) {
+              total = parseInt(match[1], 10);
+            }
+          } else {
+            const oneData = countRes.ok
+              ? ((await countRes.json()) as any[])
+              : [];
+            total = oneData.length;
+          }
+        } catch {
+          // ignore errors, keep fallback
+          console.error(`Error fetching contributors count for ${fullName}`);
+        }
+
+        return [fullName, { avatars, total }] as const;
+      } catch {
+        console.error(`Error fetching contributors for ${fullName}`);
+        return [fullName, { avatars: [], total: 0 }] as const;
+      }
+    })
+  );
+
+  const repoDataPromises = repoNames.map(async (fullName) => {
+  const repoPromises = repoNames.map(async (fullName) => {
+    try {
+      // Fetch top 3 contributor avatars and contributor count concurrently
+      const [avatarsRes, countRes] = await Promise.all([
+        fetch(
+          `https://api.github.com/repos/${fullName}/contributors?per_page=3`,
+          { headers: baseHeaders }
+        ),
+        fetch(
+          `https://api.github.com/repos/${fullName}/contributors?per_page=1&anon=1`,
+          { headers: baseHeaders }
+        ),
+      ]);
+
+      const avatarsData = avatarsRes.ok
+        ? ((await avatarsRes.json()) as Array<{ avatar_url: string }>)
+        : [];
+
+      const avatars = avatarsData.slice(0, 3).map((c) => c.avatar_url);
+
+      // Fetch contributor count (using per_page=1 to inspect Link header)
+      let total = avatarsData.length; // fallback
+
+      const link = countRes.headers.get("link");
+      if (link && /rel="last"/.test(link)) {
+        const match = link.match(/&?page=(\d+)>; rel="last"/);
+        if (match?.[1]) {
+          total = parseInt(match[1], 10);
+        }
+      } else {
+        const oneData = countRes.ok ? ((await countRes.json()) as any[]) : [];
+        total = Math.max(total, oneData.length);
+  await Promise.all(
+  const repoDataResults = await Promise.all(
+    repoNames.map(async (fullName) => {
+      try {
+        // Fetch top 3 contributor avatars
+        const avatarsRes = await fetch(
+          `https://api.github.com/repos/${fullName}/contributors?per_page=3`,
+          {
+            headers: baseHeaders,
+          }
+        );
+
+        const avatarsData = avatarsRes.ok
+          ? ((await avatarsRes.json()) as Array<{ avatar_url: string }>)
+          : [];
+
+        const avatars = avatarsData.slice(0, 3).map((c) => c.avatar_url);
+        let total = avatarsData.length; // fallback
+
+        if (countRes) {
+          try {
+            const link = countRes.headers.get("link");
+            if (link && /rel="last"/.test(link)) {
+              const match = link.match(/&?page=(\d+)>; rel="last"/);
+              if (match?.[1]) {
+                total = parseInt(match[1], 10);
+              }
+            } else {
+              const oneData = countRes.ok
+                ? ((await countRes.json()) as any[])
+                : [];
+              total = oneData.length;
+            }
+          } catch {
+            console.error(`Error fetching contributors for ${fullName}`);
+          }
+        }
+
+        contributorsByRepo[fullName] = { avatars, total };
+      } catch {
+        console.error(`Error fetching contributors for ${fullName}`);
+        contributorsByRepo[fullName] = { avatars: [], total: 0 };
+      }
+    })
+  );
+
+        // Fetch contributor count (using per_page=1 to inspect Link header)
+        let total = avatarsData.length; // fallback
+        try {
+          const countRes = await fetch(
+            `https://api.github.com/repos/${fullName}/contributors?per_page=1&anon=1`,
+            {
+              headers: baseHeaders,
+            }
+          );
+
+          const link = countRes.headers.get("link");
+          if (link && /rel="last"/.test(link)) {
+            const match = link.match(/&?page=(\d+)>; rel="last"/);
+            if (match?.[1]) {
+              total = parseInt(match[1], 10);
+            }
+          } else {
+            const oneData = countRes.ok
+              ? ((await countRes.json()) as any[])
+              : [];
+            total = oneData.length;
+          }
+        } catch {
+          // ignore errors, keep fallback
+          console.error(`Error fetching contributors for ${fullName}`);
+        }
+
+        contributorsByRepo[fullName] = {
+          avatars,
+          total,
+        };
+      } catch {
+        console.error(`Error fetching contributors for ${fullName}`);
+        contributorsByRepo[fullName] = { avatars: [], total: 0 };
+      }
+    })
+  );
+        return { fullName, avatars, total };
+      } catch {
+        console.error(`Error fetching contributors for ${fullName}`);
+        return { fullName, avatars: [], total: 0 };
+      }
+    })
+  );
+
+      return {
+        fullName,
+        data: {
+          avatars,
+          total,
+        },
+      };
+    } catch {
+      console.error(`Error fetching contributors for ${fullName}`);
+      return {
+        fullName,
+        data: { avatars: [], total: 0 },
+      };
+    }
+  });
+
+  const allRepoData = await Promise.all(repoDataPromises);
+  for (const { fullName, data } of allRepoData) {
+      return [fullName, { avatars, total }] as const;
+    } catch (error) {
+      console.error(`Error fetching contributors for ${fullName}:`, error);
+      return [fullName, { avatars: [], total: 0 }] as const;
+    }
+  });
+
+  const results = await Promise.all(repoPromises);
+  for (const [fullName, data] of results) {
+    contributorsByRepo[fullName] = data;
   }
+  const contributorsByRepo: Record<
+    string,
+    { avatars: string[]; total: number }
+  > = Object.fromEntries(
+    repoDataResults.map((res) => [
+      res.fullName,
+      { avatars: res.avatars, total: res.total },
+    ])
+  );
 
   cachedContributors = {
     data: contributorsByRepo,

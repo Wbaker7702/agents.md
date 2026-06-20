@@ -2,6 +2,8 @@ import React from "react";
 import ClipboardIcon from "./icons/ClipboardIcon";
 import CopyIcon from "./icons/CopyIcon";
 
+const INLINE_CODE_REGEX = /(`[^`]+`)/g;
+
 interface CodeExampleProps {
   /** Markdown content to display; falls back to default example if not provided */
   code?: string;
@@ -100,11 +102,13 @@ function parseMarkdown(md: string): React.ReactNode[] {
   return elements;
 }
 
+const INLINE_CODE_REGEX = /(`[^`]+`)/g;
+
 /**
  * Render a line with inline code highlighting
  */
 function renderLineWithInlineCode(line: string): React.ReactNode {
-  const parts = line.split(/(`[^`]+`)/g);
+  const parts = line.split(INLINE_CODE_REGEX);
 
   return parts.map((part, index) => {
     if (part.startsWith("`") && part.endsWith("`")) {

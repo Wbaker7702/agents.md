@@ -100,11 +100,13 @@ function parseMarkdown(md: string): React.ReactNode[] {
   return elements;
 }
 
+const INLINE_CODE_REGEX = /(`[^`]+`)/g;
+
 /**
  * Render a line with inline code highlighting
  */
 function renderLineWithInlineCode(line: string): React.ReactNode {
-  const parts = line.split(/(`[^`]+`)/g);
+  const parts = line.split(INLINE_CODE_REGEX);
 
   return parts.map((part, index) => {
     if (part.startsWith("`") && part.endsWith("`")) {
@@ -132,6 +134,8 @@ export default function CodeExample({
 }: CodeExampleProps) {
   const md = code ?? EXAMPLE_AGENTS_MD;
   const [copied, setCopied] = React.useState(false);
+
+  const parsedMarkdown = React.useMemo(() => parseMarkdown(md), [md]);
 
   const copyToClipboard = async () => {
     try {
@@ -183,7 +187,7 @@ export default function CodeExample({
           } border border-gray-200 dark:border-gray-700 shadow-sm`}
         >
           <code>
-            {parseMarkdown(md)}
+            {parsedMarkdown}
           </code>
         </pre>
       </div>

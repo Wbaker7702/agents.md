@@ -18,6 +18,9 @@ interface RepoCardProps {
   language: string;
 }
 
+/** Placeholder array for contributor avatars. */
+const PLACEHOLDER_AVATARS = [null, null, null];
+
 /** Hard-coded examples used for the marketing page. */
 const REPOS: RepoCardProps[] = [
   {

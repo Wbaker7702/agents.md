@@ -88,6 +88,7 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
     baseHeaders["Authorization"] = `Bearer ${process.env.GH_AUTH_TOKEN}`;
   }
 
+  const repoDataPromises = repoNames.map(async (fullName) => {
   const repoPromises = repoNames.map(async (fullName) => {
     try {
       // Fetch top 3 contributor avatars and contributor count concurrently
@@ -183,6 +184,24 @@ export const getStaticProps: GetStaticProps<LandingPageProps> = async () => {
     })
   );
 
+      return {
+        fullName,
+        data: {
+          avatars,
+          total,
+        },
+      };
+    } catch {
+      console.error(`Error fetching contributors for ${fullName}`);
+      return {
+        fullName,
+        data: { avatars: [], total: 0 },
+      };
+    }
+  });
+
+  const allRepoData = await Promise.all(repoDataPromises);
+  for (const { fullName, data } of allRepoData) {
       return [fullName, { avatars, total }] as const;
     } catch (error) {
       console.error(`Error fetching contributors for ${fullName}:`, error);
